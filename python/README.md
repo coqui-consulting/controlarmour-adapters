@@ -1,0 +1,63 @@
+# controlarmour (Python)
+
+Report what your Python agent does to ControlArmour on this computer and ask it before risky actions.
+Standard library only; Python 3.9 or newer. Part of the Developer plan. Licence: Apache-2.0.
+
+```bash
+pip install controlarmour            # or: pip install "controlarmour[langchain]"
+```
+
+## Any agent
+
+```python
+from controlarmour import ControlArmour, Blocked
+
+ca = ControlArmour(title="Nightly reconciliation", agent="my-agent")
+ca.step("Load bank export")
+ca.file("exports/bank-oct.csv", action="read", lines=412)
+
+try:
+    with ca.check("shell", command="rm -r build"):     # asks first; the body runs only when allowed
+        subprocess.run(["rm", "-r", "build"], check=True)
+    ca.command("rm -r build", exit_code=0)
+except Blocked as e:
+    print(e)                                            # the reason, for the person
+
+for msg in ca.messages():                               # instructions the person sent from ControlArmour
+    print("The person says:", msg)
+ca.done()
+```
+
+`@ca.guard("send_email")` wraps a function so it is asked about before every call and recorded after.
+
+## LangChain and LangGraph
+
+```python
+from controlarmour.langchain import ControlArmourCallbackHandler
+handler = ControlArmourCallbackHandler(title="Support triage")
+agent.invoke({"input": "..."}, config={"callbacks": [handler]})
+```
+
+A refused tool call raises `Blocked` from the handler and never runs.
+
+## OpenAI Agents SDK
+
+```python
+from controlarmour.openai_agents import ControlArmourHooks, guard_tools
+hooks = ControlArmourHooks(title="Order desk")
+guard_tools(agent, hooks.ca)
+await Runner.run(agent, "...", hooks=hooks)
+```
+
+## The rules it follows
+
+- If ControlArmour is not running, every call is a no-op and your agent carries on.
+- Once ControlArmour has answered a check, a lost connection blocks the action (`Blocked`).
+- After a licence lapse ControlArmour stops checking; your agent carries on.
+- Stop and Pause from ControlArmour are honoured at the next `ask` (`Stopped`, a wait while paused).
+- Nothing you pass as content or output is stored: ControlArmour keeps sizes and line counts.
+- A pending approval is waited for inside `ask`, in ControlArmour, for up to 25 minutes.
+- Instructions the person types in ControlArmour queue in `ca.messages()`. The framework adapters cannot
+  hand them to the model for you (no framework offers a hook for that), so read them where your code
+  builds the next input. The `ask` calls are blocking HTTP; the async adapters run them in a thread.
+- A developer's `http_proxy` is ignored: ControlArmour is always reached directly on this computer.

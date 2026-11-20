@@ -1,0 +1,29 @@
+{
+  "name": "@controlarmour/agent",
+  "version": "0.1.0",
+  "description": "Report what your Node agent does to ControlArmour on this computer and ask it before risky actions. No dependencies.",
+  "license": "Apache-2.0",
+  "author": "Coqui Consulting LLC",
+  "homepage": "https://github.com/coqui-consulting/controlarmour-adapters#readme",
+  "repository": { "type": "git", "url": "git+https://github.com/coqui-consulting/controlarmour-adapters.git", "directory": "node" },
+  "bugs": { "url": "https://github.com/coqui-consulting/controlarmour-adapters/issues" },
+  "keywords": ["controlarmour", "ai-agent", "safety", "langchain", "cline", "mcp"],
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./langchain": "./src/langchain.js",
+    "./cline": "./src/cline.js"
+  },
+  "files": ["src", "README.md", "LICENSE"],
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "test": "node --test"
+  },
+  "peerDependencies": {
+    "@langchain/core": ">=0.2"
+  },
+  "peerDependenciesMeta": {
+    "@langchain/core": { "optional": true }
+  }
+}
